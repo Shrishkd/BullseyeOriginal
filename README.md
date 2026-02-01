@@ -87,44 +87,7 @@ This project is built with **FastAPI + React**, integrates **Upstox market data*
 - **GitHub** (CI/CD)
 
 ---
-
-## 📂 Project Structure
-
-Bullseye/
-│
-├── Backend/
-│ ├── app/
-│ │ ├── api/
-│ │ │ └── v1/
-│ │ │ ├── auth.py
-│ │ │ ├── market.py
-│ │ │ ├── ws_market.py
-│ │ │ └── news.py
-│ │ │
-│ │ ├── services/
-│ │ │ ├── instrument_registry.py
-│ │ │ ├── symbol_resolver.py
-│ │ │ └── market_providers/
-│ │ │ ├── upstox.py
-│ │ │ └── router.py
-│ │ │
-│ │ ├── utils/
-│ │ │ └── market_time.py
-│ │ │
-│ │ ├── db/
-│ │ ├── models.py
-│ │ └── main.py
-│ │
-│ ├── data/ # auto-generated NSE CSV cache
-│ ├── requirements.txt
-│ └── start.sh
-│
-└── Frontend/
-├── src/
-│ ├── pages/Market.tsx
-│ ├── components/CandlestickChart.tsx
-│ └── ...
-└── package.json
+## 📸 Screenshots
 
 
 ---
