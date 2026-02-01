@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+Green, White, Black theme with glassmorphism
+*/
+
+@layer base {
+  :root {
+    /* Light theme - clean white with green accents */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 145 70% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 145 50% 30%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 145 60% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 85%;
+    --input: 0 0% 90%;
+    --ring: 145 70% 40%;
+    --radius: 0.75rem;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(145, 70%, 40%), hsl(145, 50%, 30%));
+    --gradient-accent: linear-gradient(135deg, hsl(145, 60%, 45%), hsl(145, 70%, 40%));
+    --gradient-danger: linear-gradient(135deg, hsl(0, 85%, 60%), hsl(15, 85%, 55%));
+    
+    /* Glass effect */
+    --glass-bg: hsla(0, 0%, 100%, 0.7);
+    --glass-border: hsla(0, 0%, 0%, 0.1);
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 145 70% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 145 70% 40%;
+  }
+
+  .dark {
+    /* Dark theme - deep black with green accents */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 145 70% 45%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 145 50% 35%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 145 60% 50%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 18%;
+    --input: 0 0% 12%;
+    --ring: 145 70% 45%;
+    
+    /* Gradients for dark theme */
+    --gradient-primary: linear-gradient(135deg, hsl(145, 70%, 45%), hsl(145, 50%, 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(145, 60%, 50%), hsl(145, 70%, 45%));
+    --gradient-danger: linear-gradient(135deg, hsl(0, 85%, 60%), hsl(15, 85%, 55%));
+    --gradient-success: linear-gradient(135deg, hsl(145, 70%, 45%), hsl(145, 60%, 50%));
+    
+    /* Glass effect for dark */
+    --glass-bg: hsla(0, 0%, 6%, 0.85);
+    --glass-border: hsla(0, 0%, 25%, 0.4);
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 145 70% 45%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 145 70% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  /* Glassmorphism effects */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid var(--glass-border);
+  }
+  
+  .glass-strong {
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  :root .glass-strong {
+    background: hsla(0, 0%, 100%, 0.9);
+    border: 1px solid hsla(0, 0%, 0%, 0.1);
+  }
+  
+  .dark .glass-strong {
+    background: hsla(0, 0%, 8%, 0.95);
+    border: 1px solid hsla(0, 0%, 25%, 0.5);
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Glowing effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsla(145, 70%, 45%, 0.4),
+                0 0 40px hsla(145, 70%, 45%, 0.2);
+  }
+  
+  .glow-accent {
+    box-shadow: 0 0 20px hsla(145, 60%, 50%, 0.4),
+                0 0 40px hsla(145, 60%, 50%, 0.2);
+  }
+  
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Hover scale */
+  .hover-scale {
+    @apply transition-smooth hover:scale-105;
+  }
+  
+  /* Chart colors */
+  .chart-primary {
+    fill: hsl(var(--primary));
+  }
+  
+  .chart-secondary {
+    fill: hsl(var(--secondary));
+  }
+  
+  .chart-accent {
+    fill: hsl(var(--accent));
+  }
+}

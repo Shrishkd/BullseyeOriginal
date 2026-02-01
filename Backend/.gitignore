@@ -1,0 +1,8 @@
+*.venv
+venv
+docker-compose.yml
+.env
+*.txt
+__pycache__/
+*.db
+*.sqlite3
