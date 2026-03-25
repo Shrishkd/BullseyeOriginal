@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     FINNHUB_API_KEY: str | None = None
 
     # =====================
+    # NEWS
+    # =====================
+    NEWS_API_KEY: str | None = None
+
+    # =====================
     # UPSTOX
     # =====================
     UPSTOX_API_KEY: str | None = None
