@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.api.v1 import auth, market, chat, health, ws_market, news
@@ -32,6 +33,45 @@ async def lifespan(app: FastAPI):
 
 
 # -----------------------------
+# CORS-safe origins
+# -----------------------------
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:5173",
+]
+
+
+# -----------------------------
+# Catch-all error middleware (runs BEFORE CORSMiddleware)
+# Ensures unhandled exceptions still get CORS headers
+# -----------------------------
+class CatchAllErrorMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as exc:
+            print(f"❌ Unhandled error on {request.method} {request.url}: {exc}")
+            origin = request.headers.get("origin", "")
+            resp = JSONResponse(
+                status_code=500,
+                content={
+                    "detail": "Internal server error",
+                    "error": str(exc),
+                    "path": str(request.url),
+                },
+            )
+            # Manually add CORS headers so the browser can read the error
+            if origin in ALLOWED_ORIGINS:
+                resp.headers["access-control-allow-origin"] = origin
+                resp.headers["access-control-allow-credentials"] = "true"
+            return resp
+
+
+# -----------------------------
 # Create FastAPI app
 # -----------------------------
 app = FastAPI(
@@ -42,38 +82,19 @@ app = FastAPI(
 
 
 # -----------------------------
-# CORS
+# Middleware (order matters: last added = outermost = runs first)
 # -----------------------------
+# CORSMiddleware is outermost — handles preflight & normal CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# -----------------------------
-# Global exception handler
-# (prevents ugly 500s, returns clean JSON errors in dev)
-# -----------------------------
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    print(f"❌ Unhandled error on {request.method} {request.url}: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={
-            "detail": "Internal server error",
-            "error": str(exc),           # remove `error` field before production
-            "path": str(request.url),
-        },
-    )
+# CatchAllErrorMiddleware sits inside CORS, catches crashes
+app.add_middleware(CatchAllErrorMiddleware)
 
 
 # -----------------------------
