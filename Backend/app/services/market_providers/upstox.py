@@ -1,6 +1,7 @@
 # app/services/market_providers/upstox.py
 
 import os
+import asyncio
 import httpx
 from datetime import datetime, timedelta, time
 import pytz
@@ -8,6 +9,9 @@ from .base import MarketProvider
 
 UPSTOX_BASE_URL = "https://api.upstox.com/v2"
 IST = pytz.timezone("Asia/Kolkata")
+UPSTOX_TIMEOUT = httpx.Timeout(connect=30.0, read=30.0, write=10.0, pool=10.0)
+UPSTOX_MAX_RETRIES = 3
+UPSTOX_RETRY_BACKOFF_SECONDS = 2
 
 # Upstox API limitation - max date they have data for (update this as needed)
 UPSTOX_MAX_DATE = datetime(2025, 10, 23).date()
@@ -30,6 +34,30 @@ class UpstoxProvider(MarketProvider):
             "Accept": "application/json",
         }
 
+    async def _get_with_retries(self, client: httpx.AsyncClient, url: str, **kwargs):
+        last_error = None
+
+        for attempt in range(1, UPSTOX_MAX_RETRIES + 1):
+            try:
+                response = await client.get(url, headers=self._headers(), **kwargs)
+                if response.status_code not in {429, 500, 502, 503, 504}:
+                    return response
+
+                last_error = f"HTTP {response.status_code}: {response.text[:200]}"
+            except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as exc:
+                last_error = f"{exc.__class__.__name__}: {exc}"
+
+            if attempt < UPSTOX_MAX_RETRIES:
+                wait_seconds = UPSTOX_RETRY_BACKOFF_SECONDS * attempt
+                print(
+                    f"Upstox request failed (attempt {attempt}/{UPSTOX_MAX_RETRIES}); "
+                    f"retrying in {wait_seconds}s..."
+                )
+                await asyncio.sleep(wait_seconds)
+
+        print(f"Upstox request failed after {UPSTOX_MAX_RETRIES} attempts: {last_error}")
+        return None
+
     # ============================
     # LIVE QUOTE (LTP)
     # ============================
@@ -40,8 +68,11 @@ class UpstoxProvider(MarketProvider):
         url = f"{UPSTOX_BASE_URL}/market-quote/ltp"
         params = {"instrument_key": instrument_key}
 
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.get(url, headers=self._headers(), params=params)
+        async with httpx.AsyncClient(timeout=UPSTOX_TIMEOUT) as client:
+            r = await self._get_with_retries(client, url, params=params)
+
+        if r is None:
+            return {}
 
         if r.status_code != 200:
             return {}
@@ -74,7 +105,7 @@ class UpstoxProvider(MarketProvider):
 
         interval = interval_map.get(resolution, "day")
 
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=UPSTOX_TIMEOUT) as client:
 
             # ======================
             # DAILY CANDLES
@@ -103,7 +134,10 @@ class UpstoxProvider(MarketProvider):
                     f"{instrument_key}/{interval}"
                 )
 
-            r = await client.get(url, headers=self._headers())
+            r = await self._get_with_retries(client, url)
+
+        if r is None:
+            return []
 
         if r.status_code != 200:
             if r.status_code == 401 and interval != "day":

@@ -62,6 +62,9 @@ class TargetBuilder:
             df.loc[df['future_return'] < down_threshold, 'target'] = -1  # DOWN
             
         elif self.method == 'quantile':
+            # Drop lookahead NaNs BEFORE qcut — astype(int) can't handle NaN Categorical
+            df = df.dropna(subset=['future_return'])
+            
             # Quantile-based labeling (BETTER for balanced classes)
             df['target'] = pd.qcut(
                 df['future_return'], 
@@ -71,7 +74,7 @@ class TargetBuilder:
             )
             df['target'] = df['target'].astype(int)
         
-        # Drop rows where we can't calculate future return
+        # Drop rows where we can't calculate future return (covers 'return' method)
         df = df.dropna(subset=['future_return', 'target'])
         
         return df

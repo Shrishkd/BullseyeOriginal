@@ -152,9 +152,22 @@ class LSTMPredictor:
         """
         print("🚀 Training LSTM model...")
         
+        # Guard: sequence_length must be < len(X_train) to produce any sequences
+        if len(X_train) <= self.sequence_length:
+            new_seq_len = max(2, len(X_train) // 2)
+            print(f"  ⚠️  Not enough data for sequence_length={self.sequence_length} "
+                  f"(only {len(X_train)} samples). Reducing to {new_seq_len}.")
+            self.sequence_length = new_seq_len
+        
         # Convert to sequences
         print(f"  ├─ Creating sequences (length={self.sequence_length})...")
         X_train_seq, y_train_seq = self._create_sequences(X_train, y_train)
+        
+        if len(X_train_seq) == 0:
+            raise ValueError(
+                f"No sequences created — training set ({len(X_train)} rows) is too small "
+                f"for sequence_length={self.sequence_length}. Fetch more data."
+            )
         
         # Shift labels from {-1, 0, 1} to {0, 1, 2}
         y_train_seq = y_train_seq + 1
@@ -163,8 +176,11 @@ class LSTMPredictor:
         validation_data = None
         if X_val is not None and y_val is not None:
             X_val_seq, y_val_seq = self._create_sequences(X_val, y_val)
-            y_val_seq = y_val_seq + 1
-            validation_data = (X_val_seq, y_val_seq)
+            if len(X_val_seq) > 0:
+                y_val_seq = y_val_seq + 1
+                validation_data = (X_val_seq, y_val_seq)
+            else:
+                print(f"  ⚠️  Validation set too small for sequences — skipping validation.")
         
         # Auto-detect number of features
         self.n_features = X_train_seq.shape[2]
@@ -228,6 +244,11 @@ class LSTMPredictor:
         
         # Convert to sequences
         X_seq, _ = self._create_sequences(X, np.zeros(len(X)))
+        
+        if len(X_seq) == 0:
+            print(f"  ⚠️  Test set ({len(X)} rows) too small for sequences "
+                  f"(length={self.sequence_length}). Returning SIDEWAYS (0) for all.")
+            return np.zeros(len(X), dtype=int)
         
         # Predict
         predictions_shifted = self.model.predict(X_seq, verbose=0)

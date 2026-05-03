@@ -16,8 +16,18 @@ import os
 from pathlib import Path
 import asyncio
 
+# Fix Unicode/emoji output on Windows console
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 # Add backend to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
+
+# Load .env so UPSTOX_ACCESS_TOKEN and other secrets are available
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).parent.parent.parent.parent / ".env")
 
 import pandas as pd
 import numpy as np
@@ -31,6 +41,10 @@ from app.services.ml.dataset_builder import MLDatasetBuilder
 from app.services.ml.models.xgboost_model import XGBoostPredictor
 from app.services.ml.models.lstm_model import LSTMPredictor
 from app.services.ml.models.model_evaluator import ModelEvaluator
+
+
+class MarketDataFetchError(RuntimeError):
+    """Raised when a symbol cannot provide enough market data for training."""
 
 
 async def fetch_and_prepare_data(symbol: str, days: int = 60) -> pd.DataFrame:
@@ -52,19 +66,17 @@ async def fetch_and_prepare_data(symbol: str, days: int = 60) -> pd.DataFrame:
     # Fetch candles
     upstox = UpstoxProvider()
     
-    # Calculate approximate candles needed
-    # For 5-minute candles: 78 candles/day (6.5 hours trading * 12 candles/hour)
-    # Add buffer for weekends/holidays
-    limit = days * 100
-    
+    # Use daily candles for historical training data (60 days)
+    # Resolution '5' maps to intraday-only endpoint (today's data only)
+    # Resolution 'D' uses the historical endpoint with full date range
     raw_candles = await upstox.fetch_candles(
         instrument_key=instrument_key,
-        resolution='5',  # 5-minute candles
-        limit=limit
+        resolution='D',  # Daily candles for historical training
+        limit=days       # Fetch exactly as many days as requested
     )
     
     if not raw_candles:
-        raise ValueError(f"No data fetched for {symbol}")
+        raise MarketDataFetchError(f"No data fetched for {symbol}")
     
     print(f"   ✅ Fetched {len(raw_candles)} candles")
     
@@ -317,12 +329,33 @@ async def train_models_for_symbol(
 
 def main():
     """Main entry point - runs async training pipeline"""
+    
+    # ============================================================
+    # CRITICAL: Load NSE instrument registry
+    # ============================================================
+    from app.services.instrument_registry import load_instruments
+    
+    print("🔄 Loading NSE instrument registry...")
+    try:
+        load_instruments()
+        print("✅ Instrument registry loaded\n")
+    except Exception as e:
+        print(f"❌ Failed to load instrument registry: {e}")
+        print("   Make sure you have internet connection to download NSE instruments")
+        return
+    
+    # ============================================================
+    # Train models
+    # ============================================================
     symbols = ['RELIANCE', 'TCS', 'INFY']  # Add your symbols
     
     for symbol in symbols:
         try:
             # Run async function
             asyncio.run(train_models_for_symbol(symbol, days=60))
+        except MarketDataFetchError as e:
+            print(f"Skipping {symbol}: {e}")
+            continue
         except Exception as e:
             print(f"❌ Error training {symbol}: {e}")
             import traceback

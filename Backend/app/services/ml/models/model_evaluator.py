@@ -32,21 +32,28 @@ class ModelEvaluator:
         y_true_shifted = y_true + 1
         y_pred_shifted = y_pred + 1
         
+        # Determine which classes are actually present (handles small datasets)
+        all_labels = sorted(set(y_true_shifted) | set(y_pred_shifted))
+        label_to_name = {0: 'DOWN', 1: 'SIDEWAYS', 2: 'UP'}
+        present_names = [label_to_name.get(l, str(l)) for l in all_labels]
+        
         # Basic metrics
         accuracy = accuracy_score(y_true_shifted, y_pred_shifted)
-        precision = precision_score(y_true_shifted, y_pred_shifted, average='weighted')
-        recall = recall_score(y_true_shifted, y_pred_shifted, average='weighted')
-        f1 = f1_score(y_true_shifted, y_pred_shifted, average='weighted')
+        precision = precision_score(y_true_shifted, y_pred_shifted, average='weighted', zero_division=0)
+        recall = recall_score(y_true_shifted, y_pred_shifted, average='weighted', zero_division=0)
+        f1 = f1_score(y_true_shifted, y_pred_shifted, average='weighted', zero_division=0)
         
-        # Per-class metrics
+        # Per-class metrics — use only classes present in the data
         report = classification_report(
             y_true_shifted, y_pred_shifted,
-            target_names=class_names,
-            output_dict=True
+            labels=all_labels,
+            target_names=present_names,
+            output_dict=True,
+            zero_division=0
         )
         
         # Confusion matrix
-        cm = confusion_matrix(y_true_shifted, y_pred_shifted)
+        cm = confusion_matrix(y_true_shifted, y_pred_shifted, labels=all_labels)
         
         return {
             'accuracy': accuracy,
@@ -54,7 +61,8 @@ class ModelEvaluator:
             'recall': recall,
             'f1_score': f1,
             'classification_report': report,
-            'confusion_matrix': cm
+            'confusion_matrix': cm,
+            'present_classes': present_names,
         }
     
     @staticmethod
@@ -159,11 +167,13 @@ class ModelEvaluator:
                       f"F1: {report['f1-score']:.2%}")
         
         print(f"\n🔀 Confusion Matrix:")
-        print(f"              Predicted →")
-        print(f"  Actual ↓    DOWN   SIDE    UP")
         cm = metrics['confusion_matrix']
-        for i, label in enumerate(['DOWN', 'SIDE', 'UP']):
-            print(f"  {label:>8}   {cm[i][0]:>5} {cm[i][1]:>6} {cm[i][2]:>6}")
+        present = metrics.get('present_classes', ['DOWN', 'SIDEWAYS', 'UP'])
+        header = '   '.join(f"{c:>6}" for c in present)
+        print(f"              Predicted → {header}")
+        for i, label in enumerate(present):
+            row = '   '.join(f"{cm[i][j]:>6}" for j in range(len(present)))
+            print(f"  {label:>8}   {row}")
         
         if trading_metrics:
             print(f"\n💰 Trading Performance:")
