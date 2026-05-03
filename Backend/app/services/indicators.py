@@ -44,3 +44,34 @@ def rsi(values, period=14):
         rsi_values.append(100 - (100 / (1 + rs)))
 
     return rsi_values
+
+def macd(values, fast=12, slow=26, signal=9):
+    """
+    MACD (Moving Average Convergence Divergence)
+    Returns: (macd_line, signal_line, histogram)
+    """
+    ema_fast = ema(values, fast)
+    ema_slow = ema(values, slow)
+    
+    macd_line = []
+    for i in range(len(values)):
+        if ema_fast[i] is None or ema_slow[i] is None:
+            macd_line.append(None)
+        else:
+            macd_line.append(ema_fast[i] - ema_slow[i])
+    
+    # Signal line (EMA of MACD)
+    macd_signal = ema([m for m in macd_line if m is not None], signal)
+    
+    # Pad signal to match length
+    signal_line = [None] * (len(macd_line) - len(macd_signal)) + macd_signal
+    
+    # Histogram
+    histogram = []
+    for i in range(len(macd_line)):
+        if macd_line[i] is None or signal_line[i] is None:
+            histogram.append(None)
+        else:
+            histogram.append(macd_line[i] - signal_line[i])
+    
+    return macd_line, signal_line, histogram

@@ -7,7 +7,7 @@ from app.schemas import PriceIn, PriceOut, AssetOut
 from app.crud import assets as assets_crud, prices as prices_crud
 from app.api.deps import get_db, get_current_user
 
-from app.services.indicators import sma, ema, rsi
+from app.services.indicators import sma, ema, rsi, macd
 from app.services.market_providers.router import get_provider
 from app.services.market_providers.upstox import is_market_open
 
@@ -152,10 +152,14 @@ async def get_candles(
     sma_vals = sma(closes, period)
     ema_vals = ema(closes, period)
     rsi_vals = rsi(closes, period)
+    macd_line, macd_signal, macd_hist = macd(closes)
 
     for i, c in enumerate(candles):
         c["sma"] = sma_vals[i] if i < len(sma_vals) else None
         c["ema"] = ema_vals[i] if i < len(ema_vals) else None
         c["rsi"] = rsi_vals[i] if i < len(rsi_vals) else None
+        c["macd"] = macd_line[i]  # NEW
+        c["macd_signal"] = macd_signal[i]  # NEW
+        c["macd_histogram"] = macd_hist[i]  # NEW
 
     return candles

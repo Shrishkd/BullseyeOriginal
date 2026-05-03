@@ -8,12 +8,13 @@ This script:
 4. Evaluates both models
 5. Saves best model
 
-Run: python -m services.ml.train_pipeline
+Run: python -m app.services.ml.train_pipeline
 """
 
 import sys
 import os
 from pathlib import Path
+import asyncio
 
 # Add backend to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -23,17 +24,93 @@ import numpy as np
 from datetime import datetime
 
 # Import your existing services
-from services.upstox_provider import UpstoxProvider
-from services.ml.dataset_builder import MLDatasetBuilder
-from services.ml.models.xgboost_model import XGBoostPredictor
-from services.ml.models.lstm_model import LSTMPredictor
-from services.ml.models.model_evaluator import ModelEvaluator
+from app.services.market_providers.upstox import UpstoxProvider
+from app.services.symbol_resolver import get_instrument_key
+from app.services.indicators import sma, ema, rsi, macd
+from app.services.ml.dataset_builder import MLDatasetBuilder
+from app.services.ml.models.xgboost_model import XGBoostPredictor
+from app.services.ml.models.lstm_model import LSTMPredictor
+from app.services.ml.models.model_evaluator import ModelEvaluator
 
 
-def train_models_for_symbol(
+async def fetch_and_prepare_data(symbol: str, days: int = 60) -> pd.DataFrame:
+    """
+    Fetch historical data and add technical indicators.
+    
+    Args:
+        symbol: Stock symbol (e.g., 'RELIANCE')
+        days: Number of days of historical data
+    
+    Returns:
+        DataFrame with OHLCV + indicators
+    """
+    print("📥 Fetching market data...")
+    
+    # Get instrument key
+    instrument_key = get_instrument_key(symbol)
+    
+    # Fetch candles
+    upstox = UpstoxProvider()
+    
+    # Calculate approximate candles needed
+    # For 5-minute candles: 78 candles/day (6.5 hours trading * 12 candles/hour)
+    # Add buffer for weekends/holidays
+    limit = days * 100
+    
+    raw_candles = await upstox.fetch_candles(
+        instrument_key=instrument_key,
+        resolution='5',  # 5-minute candles
+        limit=limit
+    )
+    
+    if not raw_candles:
+        raise ValueError(f"No data fetched for {symbol}")
+    
+    print(f"   ✅ Fetched {len(raw_candles)} candles")
+    
+    # Convert to DataFrame
+    df = pd.DataFrame(raw_candles)
+    df['time'] = pd.to_datetime(df['time'], unit='ms')
+    df = df.set_index('time').sort_index()
+    
+    print(f"   ✅ Date range: {df.index[0]} to {df.index[-1]}")
+    
+    # ============================================================
+    # Add Technical Indicators
+    # ============================================================
+    print("   ├─ Computing technical indicators...")
+    
+    closes = df['close'].tolist()
+    
+    # RSI
+    rsi_vals = rsi(closes, period=14)
+    df['rsi'] = rsi_vals
+    
+    # SMA
+    sma_vals = sma(closes, period=14)
+    df['sma'] = sma_vals
+    
+    # EMA (9 and 21 for crossover signals)
+    ema_9_vals = ema(closes, period=9)
+    ema_21_vals = ema(closes, period=21)
+    df['ema_9'] = ema_9_vals
+    df['ema_21'] = ema_21_vals
+    
+    # MACD
+    macd_line, macd_signal, macd_hist = macd(closes)
+    df['macd'] = macd_line
+    df['macd_signal'] = macd_signal
+    df['macd_histogram'] = macd_hist
+    
+    print(f"   ✅ Added indicators: RSI, SMA, EMA(9,21), MACD")
+    
+    return df
+
+
+async def train_models_for_symbol(
     symbol: str,
     days: int = 60,
-    save_dir: str = 'services/ml/trained_models'
+    save_dir: str = 'app/services/ml/trained_models'
 ):
     """
     Complete training pipeline for a symbol.
@@ -55,11 +132,7 @@ def train_models_for_symbol(
     # ============================================================
     print("📥 STEP 1: Fetching market data...")
     
-    upstox = UpstoxProvider()  # Your existing provider
-    df = upstox.fetch_candles(symbol, interval='5minute', days=days)
-    
-    print(f"   ✅ Fetched {len(df)} candles")
-    print(f"   ✅ Date range: {df.index[0]} to {df.index[-1]}")
+    df = await fetch_and_prepare_data(symbol, days)
     
     # ============================================================
     # STEP 2: Build ML Dataset
@@ -242,13 +315,20 @@ def train_models_for_symbol(
     }
 
 
-if __name__ == '__main__':
-    # Train for multiple symbols
+def main():
+    """Main entry point - runs async training pipeline"""
     symbols = ['RELIANCE', 'TCS', 'INFY']  # Add your symbols
     
     for symbol in symbols:
         try:
-            train_models_for_symbol(symbol, days=60)
+            # Run async function
+            asyncio.run(train_models_for_symbol(symbol, days=60))
         except Exception as e:
             print(f"❌ Error training {symbol}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
+
+
+if __name__ == '__main__':
+    main()
