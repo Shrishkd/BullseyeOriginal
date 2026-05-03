@@ -1,0 +1,254 @@
+"""
+Complete training pipeline for Bullseye AI.
+
+This script:
+1. Fetches market data
+2. Builds ML dataset
+3. Trains XGBoost and LSTM models
+4. Evaluates both models
+5. Saves best model
+
+Run: python -m services.ml.train_pipeline
+"""
+
+import sys
+import os
+from pathlib import Path
+
+# Add backend to path
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
+import pandas as pd
+import numpy as np
+from datetime import datetime
+
+# Import your existing services
+from services.upstox_provider import UpstoxProvider
+from services.ml.dataset_builder import MLDatasetBuilder
+from services.ml.models.xgboost_model import XGBoostPredictor
+from services.ml.models.lstm_model import LSTMPredictor
+from services.ml.models.model_evaluator import ModelEvaluator
+
+
+def train_models_for_symbol(
+    symbol: str,
+    days: int = 60,
+    save_dir: str = 'services/ml/trained_models'
+):
+    """
+    Complete training pipeline for a symbol.
+    
+    Args:
+        symbol: Stock symbol (e.g., 'RELIANCE')
+        days: Historical data to fetch
+        save_dir: Where to save trained models
+    """
+    print(f"\n{'='*70}")
+    print(f"🚀 BULLSEYE AI - MODEL TRAINING PIPELINE")
+    print(f"{'='*70}")
+    print(f"Symbol: {symbol}")
+    print(f"Training Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*70}\n")
+    
+    # ============================================================
+    # STEP 1: Fetch Market Data
+    # ============================================================
+    print("📥 STEP 1: Fetching market data...")
+    
+    upstox = UpstoxProvider()  # Your existing provider
+    df = upstox.fetch_candles(symbol, interval='5minute', days=days)
+    
+    print(f"   ✅ Fetched {len(df)} candles")
+    print(f"   ✅ Date range: {df.index[0]} to {df.index[-1]}")
+    
+    # ============================================================
+    # STEP 2: Build ML Dataset
+    # ============================================================
+    print("\n📊 STEP 2: Building ML dataset...")
+    
+    dataset_builder = MLDatasetBuilder()
+    df_ml = dataset_builder.build_dataset(df, include_technical=True)
+    
+    # ============================================================
+    # STEP 3: Train-Val-Test Split
+    # ============================================================
+    print("\n✂️  STEP 3: Splitting dataset...")
+    
+    train_df, val_df, test_df = dataset_builder.prepare_train_test_split(
+        df_ml,
+        test_size=0.15,
+        validation_size=0.15
+    )
+    
+    # Get feature matrices
+    X_train, y_train, features = dataset_builder.get_feature_target_split(train_df)
+    X_val, y_val, _ = dataset_builder.get_feature_target_split(val_df)
+    X_test, y_test, _ = dataset_builder.get_feature_target_split(test_df)
+    
+    # Save scaler
+    os.makedirs(save_dir, exist_ok=True)
+    dataset_builder.save_scaler(f'{save_dir}/scaler_{symbol}.pkl')
+    
+    # Get actual returns for trading metrics
+    future_returns_test = test_df['future_return'].values
+    
+    # ============================================================
+    # STEP 4: Train XGBoost Model
+    # ============================================================
+    print("\n" + "="*70)
+    print("🎯 STEP 4: Training XGBoost Model")
+    print("="*70)
+    
+    xgb_model = XGBoostPredictor()
+    xgb_history = xgb_model.train(
+        X_train, y_train,
+        X_val, y_val,
+        feature_names=features
+    )
+    
+    # Evaluate XGBoost
+    print("\n📊 XGBoost Evaluation:")
+    y_pred_xgb = xgb_model.predict(X_test)
+    
+    evaluator = ModelEvaluator()
+    xgb_metrics = evaluator.evaluate_classification(y_test, y_pred_xgb)
+    xgb_trading = evaluator.trading_metrics(y_test, y_pred_xgb, future_returns_test)
+    
+    evaluator.print_evaluation(xgb_metrics, xgb_trading)
+    
+    # Feature importance
+    print("\n🔍 Top 10 Most Important Features (XGBoost):")
+    importance_df = xgb_model.get_feature_importance()
+    print(importance_df.head(10).to_string(index=False))
+    
+    # Save XGBoost
+    xgb_model.save_model(f'{save_dir}/xgboost_{symbol}.json')
+    
+    # ============================================================
+    # STEP 5: Train LSTM Model
+    # ============================================================
+    print("\n" + "="*70)
+    print("🧠 STEP 5: Training LSTM Model")
+    print("="*70)
+    
+    lstm_model = LSTMPredictor(
+        sequence_length=20,
+        lstm_units=[64, 32],
+        dropout=0.2
+    )
+    
+    lstm_history = lstm_model.train(
+        X_train, y_train,
+        X_val, y_val,
+        feature_names=features,
+        epochs=50,
+        batch_size=32,
+        verbose=1
+    )
+    
+    # Evaluate LSTM
+    print("\n📊 LSTM Evaluation:")
+    y_pred_lstm = lstm_model.predict(X_test)
+    
+    lstm_metrics = evaluator.evaluate_classification(y_test, y_pred_lstm)
+    lstm_trading = evaluator.trading_metrics(y_test, y_pred_lstm, future_returns_test)
+    
+    evaluator.print_evaluation(lstm_metrics, lstm_trading)
+    
+    # Save LSTM
+    lstm_model.save_model(f'{save_dir}/lstm_{symbol}.keras')
+    
+    # ============================================================
+    # STEP 6: Model Comparison
+    # ============================================================
+    print("\n" + "="*70)
+    print("⚖️  MODEL COMPARISON")
+    print("="*70)
+    
+    comparison = pd.DataFrame({
+        'Metric': [
+            'Accuracy',
+            'F1 Score',
+            'Directional Accuracy',
+            'Win Rate',
+            'Avg Return/Trade',
+            'Total Return',
+            'Sharpe Ratio'
+        ],
+        'XGBoost': [
+            f"{xgb_metrics['accuracy']:.2%}",
+            f"{xgb_metrics['f1_score']:.2%}",
+            f"{xgb_trading['directional_accuracy']:.2%}",
+            f"{xgb_trading['win_rate']:.2%}",
+            f"{xgb_trading['avg_return_per_trade']:.2f}%",
+            f"{xgb_trading['total_return']:.2f}%",
+            f"{xgb_trading['sharpe_ratio']:.3f}"
+        ],
+        'LSTM': [
+            f"{lstm_metrics['accuracy']:.2%}",
+            f"{lstm_metrics['f1_score']:.2%}",
+            f"{lstm_trading['directional_accuracy']:.2%}",
+            f"{lstm_trading['win_rate']:.2%}",
+            f"{lstm_trading['avg_return_per_trade']:.2f}%",
+            f"{lstm_trading['total_return']:.2f}%",
+            f"{lstm_trading['sharpe_ratio']:.3f}"
+        ]
+    })
+    
+    print("\n" + comparison.to_string(index=False))
+    
+    # ============================================================
+    # STEP 7: Save Training Report
+    # ============================================================
+    print("\n📝 Saving training report...")
+    
+    report = {
+        'symbol': symbol,
+        'training_date': datetime.now().isoformat(),
+        'data_info': {
+            'total_samples': len(df_ml),
+            'train_samples': len(train_df),
+            'val_samples': len(val_df),
+            'test_samples': len(test_df),
+            'n_features': len(features)
+        },
+        'xgboost': {
+            'metrics': {k: float(v) if isinstance(v, (np.floating, np.integer)) else v 
+                       for k, v in xgb_metrics.items() if k not in ['classification_report', 'confusion_matrix']},
+            'trading': {k: float(v) for k, v in xgb_trading.items()}
+        },
+        'lstm': {
+            'metrics': {k: float(v) if isinstance(v, (np.floating, np.integer)) else v 
+                       for k, v in lstm_metrics.items() if k not in ['classification_report', 'confusion_matrix']},
+            'trading': {k: float(v) for k, v in lstm_trading.items()}
+        }
+    }
+    
+    import json
+    with open(f'{save_dir}/training_report_{symbol}.json', 'w') as f:
+        json.dump(report, f, indent=2)
+    
+    print(f"   ✅ Report saved to {save_dir}/training_report_{symbol}.json")
+    
+    print("\n" + "="*70)
+    print("✅ TRAINING COMPLETE!")
+    print("="*70)
+    
+    return {
+        'xgb_model': xgb_model,
+        'lstm_model': lstm_model,
+        'dataset_builder': dataset_builder,
+        'report': report
+    }
+
+
+if __name__ == '__main__':
+    # Train for multiple symbols
+    symbols = ['RELIANCE', 'TCS', 'INFY']  # Add your symbols
+    
+    for symbol in symbols:
+        try:
+            train_models_for_symbol(symbol, days=60)
+        except Exception as e:
+            print(f"❌ Error training {symbol}: {e}")
+            continue
