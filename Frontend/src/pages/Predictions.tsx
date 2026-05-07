@@ -1,17 +1,40 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   RefreshCw,
   Brain,
   AlertCircle,
-  Sparkles,
-  Info,
   Clock,
+  Zap,
+  Cpu,
+  BarChart2,
+  Activity,
+  TrendingUp,
+  ShieldAlert,
+  ChevronRight,
+  CheckCircle2,
+  CircleOff,
 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { PredictionService } from '../services/predictionService';
 import { PredictionResponse, ModelType } from '../types/prediction';
 import { PredictionCard } from '../components/PredictionCard';
 import { SignalsList } from '../components/SignalsList';
+
+/* ── animation variants ───────────────────────────────────────────────────── */
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+};
+const fadeInUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } },
+};
 
 const popularSymbols = ['RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'SBIN', 'WIPRO', 'BAJFINANCE'];
 
@@ -22,17 +45,15 @@ export const Predictions: React.FC = () => {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
 
-  // {xgboost_trained, lstm_trained} from /models endpoint
   const [modelStatus, setModelStatus] = useState<{
     xgboost_trained: boolean;
     lstm_trained: boolean;
   } | null>(null);
 
-  // ── fetch model availability ────────────────────────────────────────────────
+  /* ── fetch model availability ─────────────────────────────────────────── */
   const checkModels = async (sym: string) => {
     try {
       const res = await PredictionService.getAvailableModels(sym.toUpperCase());
-      // backend returns { xgboost_trained, lstm_trained, ... }
       setModelStatus({
         xgboost_trained: (res as any).xgboost_trained ?? res.models?.includes('xgboost') ?? false,
         lstm_trained:    (res as any).lstm_trained    ?? res.models?.includes('lstm')    ?? false,
@@ -46,18 +67,15 @@ export const Predictions: React.FC = () => {
     if (symbol.trim().length > 1) checkModels(symbol);
   }, [symbol]);
 
-  // ── fetch prediction ────────────────────────────────────────────────────────
+  /* ── fetch prediction ─────────────────────────────────────────────────── */
   const fetchPrediction = async () => {
     if (!symbol.trim()) { setError('Please enter a symbol'); return; }
-
     setLoading(true);
     setError(null);
     setPrediction(null);
-
     try {
       const result = await PredictionService.getPrediction(symbol.toUpperCase(), model);
       setPrediction(result);
-      // refresh model status after a possible auto-train
       checkModels(symbol);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch prediction');
@@ -70,203 +88,385 @@ export const Predictions: React.FC = () => {
     if (e.key === 'Enter') fetchPrediction();
   };
 
-  // is this the first-ever prediction for this symbol (model not yet trained)?
   const isFirstTrain =
     model === 'xgboost' && modelStatus !== null && !modelStatus.xgboost_trained;
 
+  /* ── render ───────────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen p-6 space-y-6">
 
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Brain className="w-8 h-8 text-purple-600" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">AI Predictions</h1>
-            <Sparkles className="w-6 h-6 text-yellow-500" />
-          </div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Get AI-powered market predictions with explainable signals
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-center gap-4"
+      >
+        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-secondary glow-primary flex items-center justify-center flex-shrink-0">
+          <Brain className="h-7 w-7 text-primary-foreground" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold leading-tight">
+            AI <span className="gradient-text">Predictions</span>
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            ML-powered market forecasting with explainable signals
           </p>
         </div>
+      </motion.div>
 
-        {/* Info Banner */}
-        <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      {/* ── Info Banner ────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, x: -16 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.12, duration: 0.4 }}
+      >
+        <Card className="glass border-primary/20 p-4">
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <BarChart2 className="h-5 w-5 text-primary" />
+            </div>
             <div>
-              <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">How it works</h3>
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                Our AI analyzes 40+ features including RSI, EMA, MACD, price action, volume patterns,
-                and market microstructure to predict the next 10 candles (~50 minutes).
-                <strong> New symbols are auto-trained on first request (~15–30 s).</strong>
+              <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                How it works
+                <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary font-medium">
+                  40+ Features
+                </span>
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Our AI analyzes RSI, EMA, MACD, price action, volume patterns, and market
+                microstructure to predict the next 10 candles (~50 minutes).{' '}
+                <span className="text-primary font-medium">
+                  New symbols are auto-trained on first request (~15–30 s).
+                </span>
               </p>
             </div>
           </div>
-        </div>
+        </Card>
+      </motion.div>
 
-        {/* Search Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ── Search / Control Panel ─────────────────────────────────────────── */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <Card className="glass border-border/50 p-6 space-y-5">
 
-            {/* Symbol */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            {/* Symbol Input */}
+            <motion.div variants={itemVariants}>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Stock Symbol
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))}
                   onKeyPress={handleKeyPress}
                   placeholder="e.g., HDFCBANK"
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground outline-none transition-all duration-200 text-sm"
                 />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {/* Model Toggle */}
+            <motion.div variants={itemVariants}>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 AI Model
               </label>
-              <select
-                value={model}
-                onChange={(e) => setModel(e.target.value as ModelType)}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white"
-              >
-                <option value="xgboost">XGBoost — fast, auto-trains any symbol</option>
-                <option value="lstm">LSTM — deep learning, must be pre-trained</option>
-              </select>
-            </div>
+              <div className="flex gap-2 h-[46px]">
+                {([
+                  { value: 'xgboost' as ModelType, label: 'XGBoost', sub: 'Fast · Auto-train', icon: Zap },
+                  { value: 'lstm'    as ModelType, label: 'LSTM',    sub: 'Deep Learning',    icon: Cpu },
+                ] as const).map(({ value, label, sub, icon: Icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => setModel(value)}
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-xl border text-sm font-medium transition-all duration-200 px-3 ${
+                      model === value
+                        ? 'border-primary bg-primary/10 text-primary glow-primary'
+                        : 'border-border/50 bg-muted/30 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5 px-0.5">
+                {model === 'xgboost' ? 'Fast · Auto-trains any NSE symbol' : 'Deep learning · Must be pre-trained'}
+              </p>
+            </motion.div>
 
-            {/* Button */}
-            <div className="flex items-end">
-              <button
+            {/* Predict Button */}
+            <motion.div variants={itemVariants} className="flex flex-col justify-end">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={fetchPrediction}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-xl glow-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 text-sm"
               >
                 {loading ? (
                   <>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <RefreshCw className="h-4 w-4 animate-spin" />
                     {isFirstTrain ? 'Training model…' : 'Analyzing…'}
                   </>
                 ) : (
                   <>
-                    <Brain className="w-5 h-5" />
+                    <Activity className="h-4 w-4" />
                     Get Prediction
+                    <ChevronRight className="h-4 w-4" />
                   </>
                 )}
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </div>
 
           {/* Popular Symbols */}
-          <div className="mt-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Popular:</p>
+          <motion.div variants={itemVariants} className="pt-4 border-t border-border/30">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+              <TrendingUp className="h-3 w-3 text-primary" />
+              Popular Symbols
+            </p>
             <div className="flex flex-wrap gap-2">
               {popularSymbols.map((sym) => (
-                <button
+                <motion.button
                   key={sym}
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.94 }}
                   onClick={() => setSymbol(sym)}
-                  className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full transition-colors"
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ${
+                    symbol === sym
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border/40 bg-muted/30 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }`}
                 >
                   {sym}
-                </button>
+                </motion.button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          {/* Model status badges */}
-          {modelStatus !== null && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 flex-wrap text-xs">
-              <span className={`px-2 py-1 rounded-full font-medium ${
-                modelStatus.xgboost_trained
-                  ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                  : 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300'
-              }`}>
-                XGBoost: {modelStatus.xgboost_trained ? '✓ trained' : '⚡ will auto-train'}
-              </span>
-              <span className={`px-2 py-1 rounded-full font-medium ${
-                modelStatus.lstm_trained
-                  ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-              }`}>
-                LSTM: {modelStatus.lstm_trained ? '✓ trained' : '✗ not trained'}
-              </span>
-            </div>
-          )}
-        </div>
+          {/* Model Status Badges */}
+          <AnimatePresence>
+            {modelStatus !== null && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="flex gap-2 flex-wrap pt-4 border-t border-border/30"
+              >
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                  modelStatus.xgboost_trained
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'bg-accent/10 text-accent border border-accent/20'
+                }`}>
+                  {modelStatus.xgboost_trained
+                    ? <CheckCircle2 className="h-3 w-3" />
+                    : <Zap className="h-3 w-3" />
+                  }
+                  XGBoost: {modelStatus.xgboost_trained ? 'Trained' : 'Will auto-train'}
+                </span>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                  modelStatus.lstm_trained
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'bg-muted text-muted-foreground border border-border/40'
+                }`}>
+                  {modelStatus.lstm_trained
+                    ? <CheckCircle2 className="h-3 w-3" />
+                    : <CircleOff className="h-3 w-3" />
+                  }
+                  LSTM: {modelStatus.lstm_trained ? 'Trained' : 'Not trained'}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card>
+      </motion.div>
 
-        {/* First-train notice */}
+      {/* ── First-Train Notice ─────────────────────────────────────────────── */}
+      <AnimatePresence>
         {loading && isFirstTrain && (
-          <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400 animate-pulse" />
-              <div>
-                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                  First-time training for {symbol}
-                </h3>
-                <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-0.5">
-                  Fetching 200 days of data and training XGBoost model. This takes ~15–30 seconds.
-                  Future predictions for this symbol will be instant.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <div>
-                <h3 className="font-semibold text-red-900 dark:text-red-100">Prediction Failed</h3>
-                <p className="text-sm text-red-800 dark:text-red-200 mt-1">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Results */}
-        {prediction && !loading && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <PredictionCard prediction={prediction} />
-            </div>
-            <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <SignalsList signals={prediction.signals} />
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                    ⚠️ Disclaimer: AI predictions are for informational purposes only.
-                    Not financial advice. Past performance doesn't guarantee future results.
-                    Always do your own research before trading.
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="glass border-accent/30 bg-accent/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-9 w-9 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <Clock className="h-5 w-5 text-accent animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">
+                    First-time training for{' '}
+                    <span className="gradient-text">{symbol}</span>
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Fetching 200 days of market data and training the XGBoost model.
+                    This takes ~15–30 seconds. Future predictions for this symbol will be instant.
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
+            </Card>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Empty state */}
+      {/* ── Error ──────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="glass border-destructive/30 bg-destructive/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-9 w-9 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">Prediction Failed</h3>
+                  <p className="text-sm text-muted-foreground">{error}</p>
+                  {error.includes('Model not trained') && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      💡 Train the model first:{' '}
+                      <code className="px-2 py-0.5 rounded bg-muted text-primary text-xs">
+                        python -m app.services.ml.train_pipeline
+                      </code>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Loading Skeleton ───────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            {[1, 2].map((i) => (
+              <Card
+                key={i}
+                className={`glass border-border/50 p-6 space-y-3 ${i === 2 ? 'lg:col-span-2' : ''}`}
+              >
+                <div className="h-4 w-1/3 bg-muted/60 rounded-lg animate-pulse" />
+                <div className="h-8 w-2/3 bg-muted/60 rounded-lg animate-pulse" />
+                <div className="h-4 w-full bg-muted/40 rounded-lg animate-pulse" />
+                <div className="h-4 w-4/5 bg-muted/40 rounded-lg animate-pulse" />
+              </Card>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Prediction Results ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {prediction && !loading && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            {/* Prediction Card */}
+            <motion.div variants={fadeInUp} className="lg:col-span-1">
+              <PredictionCard prediction={prediction} />
+            </motion.div>
+
+            {/* Signals Panel */}
+            <motion.div variants={fadeInUp} className="lg:col-span-2">
+              <Card className="glass border-border/50 p-6">
+                <SignalsList signals={prediction.signals} />
+
+                {/* Disclaimer */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="mt-6 pt-5 border-t border-border/30"
+                >
+                  <div className="flex items-start gap-2">
+                    <ShieldAlert className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">
+                      Disclaimer: AI predictions are for informational purposes only. Not
+                      financial advice. Past performance doesn't guarantee future results.
+                      Always do your own research before trading.
+                    </p>
+                  </div>
+                </motion.div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Empty State ────────────────────────────────────────────────────── */}
+      <AnimatePresence>
         {!prediction && !loading && !error && (
-          <div className="text-center py-16">
-            <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-              No Prediction Yet
-            </h3>
-            <p className="text-gray-500 dark:text-gray-500">
-              Enter any NSE symbol and click "Get Prediction"
-            </p>
-          </div>
-        )}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/20 to-secondary/10 border border-primary/20 glow-accent flex items-center justify-center mb-6"
+            >
+              <Brain className="h-12 w-12 text-primary" />
+            </motion.div>
 
-      </div>
+            <h3 className="text-2xl font-bold mb-2">
+              Ready to <span className="gradient-text">Predict</span>
+            </h3>
+            <p className="text-muted-foreground text-sm max-w-sm mb-8">
+              Enter any NSE symbol above and click{' '}
+              <span className="text-primary font-medium">"Get Prediction"</span> to
+              see AI-powered market analysis with explainable signals.
+            </p>
+
+            <div className="flex items-center gap-6">
+              {[
+                { icon: Zap,      label: 'XGBoost',    desc: 'Fast & accurate' },
+                { icon: Cpu,      label: 'LSTM',        desc: 'Deep learning'   },
+                { icon: BarChart2, label: '40+ Signals', desc: 'Explainable AI' },
+              ].map(({ icon: Icon, label, desc }) => (
+                <motion.div
+                  key={label}
+                  whileHover={{ scale: 1.08 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="h-12 w-12 rounded-2xl bg-muted/40 border border-border/50 flex items-center justify-center">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="text-xs font-semibold text-foreground">{label}</span>
+                  <span className="text-[11px] text-muted-foreground">{desc}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
