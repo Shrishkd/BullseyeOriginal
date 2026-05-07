@@ -262,24 +262,26 @@ class LSTMPredictor:
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
         Predict class probabilities.
-        
-        Returns:
-            Array of shape (n_samples, 3) with probabilities
+        Returns uniform probabilities if not enough data for sequences.
         """
         if not self.is_trained:
             raise ValueError("Model not trained yet!")
-        
-        # Convert to sequences
+
         X_seq, _ = self._create_sequences(X, np.zeros(len(X)))
-        
-        # Predict probabilities
+
+        if len(X_seq) == 0:
+            # Not enough rows to form a sequence — return neutral uniform probs
+            return np.full((max(len(X), 1), 3), 1.0 / 3.0)
+
         probs = self.model.predict(X_seq, verbose=0)
-        
         return probs
-    
+
+
     def get_confidence(self, X: np.ndarray) -> np.ndarray:
-        """Get confidence scores"""
+        """Get confidence scores, safe for any input size."""
         probs = self.predict_proba(X)
+        if probs is None or len(probs) == 0:
+            return np.array([33.33])
         confidence = np.max(probs, axis=1) * 100
         return confidence
     

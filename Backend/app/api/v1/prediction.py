@@ -16,100 +16,60 @@ async def get_prediction(
     symbol: str,
     model: Literal['xgboost', 'lstm'] = Query(
         'xgboost',
-        description="Model to use for prediction"
+        description="Model to use: 'xgboost' (recommended) or 'lstm'"
     ),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     """
-    Get AI-powered prediction for a stock symbol.
-    
-    **Features:**
-    - Predicts UP / DOWN / SIDEWAYS
-    - Confidence score (0-100%)
-    - Expected price movement
-    - Explainable signals (WHY this prediction)
-    
-    **Example:**
-    GET /api/predict/RELIANCE?model=xgboost
+    Get AI-powered prediction for any NSE stock symbol.
 
-    **Response:**
+    **Auto-training:** If no model exists for the symbol, it is trained
+    automatically on the first request (~30 s for XGBoost, ~60 s for LSTM).
+    Subsequent requests for the same symbol are fast (model is cached).
+
+    **Response example:**
 ```json
     {
-      "symbol": "RELIANCE",
+      "symbol": "HDFCBANK",
       "prediction": "UP",
-      "confidence": 82.5,
-      "expected_move": "+1.2%",
-      "current_price": 2845.50,
-      "signals": [
-        "RSI oversold (28.5) - Bullish signal",
-        "EMA bullish crossover (9 > 21)",
-        "MACD bullish (above signal)"
-      ],
+      "confidence": 71.3,
+      "expected_move": "+1.05%",
+      "current_price": 1742.50,
+      "signals": ["RSI neutral (52.3)", "EMA bullish crossover (9 > 21)"],
       "model_used": "xgboost",
-      "timestamp": "2026-05-03T18:00:00"
+      "timestamp": "2026-05-07T15:00:00"
     }
 ```
     """
     try:
-        prediction_service = get_prediction_service()
-        result = await prediction_service.predict(symbol.upper(), model_type=model)
+        svc = get_prediction_service()
+        result = await svc.predict(symbol.upper(), model_type=model)
         return result
-    
-    except FileNotFoundError as e:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model not trained for {symbol}. Train it first using the training pipeline."
-        )
-    
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Prediction error: {str(e)}"
-        )
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Prediction error: {exc}")
 
 
 @router.get("/{symbol}/models")
 async def get_available_models(
     symbol: str,
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
-    """
-    Check which models are available for a symbol.
-    
-    Returns:
-```json
-    {
-      "symbol": "RELIANCE",
-      "models": ["xgboost", "lstm"],
-      "scaler_available": true
-    }
-```
-    """
+    """Check which models are trained for a symbol."""
     import os
-    
     model_dir = 'app/services/ml/trained_models'
-    
-    available_models = []
-    
-    # Check XGBoost
-    if os.path.exists(f"{model_dir}/xgboost_{symbol}.json"):
-        available_models.append("xgboost")
-    
-    # Check LSTM
-    if os.path.exists(f"{model_dir}/lstm_{symbol}.keras"):
-        available_models.append("lstm")
-    
-    # Check scaler
-    scaler_available = os.path.exists(f"{model_dir}/scaler_{symbol}.pkl")
-    
+    sym = symbol.upper()
+
     return {
-        "symbol": symbol.upper(),
-        "models": available_models,
-        "scaler_available": scaler_available
+        "symbol":           sym,
+        "xgboost_trained":  os.path.exists(f"{model_dir}/xgboost_{sym}.json"),
+        "lstm_trained":     os.path.exists(f"{model_dir}/lstm_{sym}.keras"),
+        "scaler_available": os.path.exists(f"{model_dir}/scaler_{sym}.pkl"),
+        "note": (
+            "If a model is not trained it will be auto-trained on the first "
+            "prediction request for that symbol."
+        ),
     }
