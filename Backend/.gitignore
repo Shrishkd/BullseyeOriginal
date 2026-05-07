@@ -9,3 +9,4 @@ __pycache__/
 *.sqbpro
 *.keras
 *.pkl
+data/nse_instruments.csv
