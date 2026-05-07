@@ -9,3 +9,4 @@ __pycache__/
 *.sqbpro
 *.keras
 *.pkl
+app/services/ml/trained_models/
