@@ -134,23 +134,35 @@ class XGBoostPredictor:
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
         Predict class probabilities.
-        
+
+        Uses output_margin=True + manual softmax instead of mutating the
+        booster's objective via set_param.  The old approach was broken because
+        model.attr('objective') returns None for models loaded from disk, so the
+        "restore" call was set_param({'objective': None}), permanently leaving
+        the booster in softprob mode.  On the next predict() call that model
+        returned shape (n_samples, 3) instead of (n_samples,), causing:
+        "only length-1 arrays can be converted to Python scalars"
+
         Returns:
-            Array of shape (n_samples, 3) with probabilities for each class
+            Array of shape (n_samples, n_classes) with class probabilities.
         """
         if not self.is_trained:
             raise ValueError("Model not trained yet!")
-        
-        # Temporarily change objective to get probabilities
-        original_objective = self.model.attr('objective')
-        
+
+        n_samples = X.shape[0]
+        n_classes = int(self.default_params.get('num_class', 3))
+
         dtest = xgb.DMatrix(X, feature_names=self.feature_names)
-        
-        # Get probabilities
-        self.model.set_param({'objective': 'multi:softprob'})
-        probs = self.model.predict(dtest)
-        self.model.set_param({'objective': original_objective})
-        
+
+        # output_margin=True returns raw (pre-softmax) scores — no objective mutation needed
+        margins = self.model.predict(dtest, output_margin=True)
+        margins = margins.reshape(n_samples, n_classes)
+
+        # Numerically stable softmax
+        margins -= margins.max(axis=1, keepdims=True)
+        exp_m = np.exp(margins)
+        probs = exp_m / exp_m.sum(axis=1, keepdims=True)
+
         return probs
     
     def get_confidence(self, X: np.ndarray) -> np.ndarray:

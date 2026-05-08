@@ -93,7 +93,7 @@ export const Predictions: React.FC = () => {
 
   /* ── render ───────────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen p-6 space-y-6">
+    <div className="min-h-screen p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <motion.div
@@ -102,14 +102,14 @@ export const Predictions: React.FC = () => {
         transition={{ duration: 0.5 }}
         className="flex items-center gap-4"
       >
-        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-secondary glow-primary flex items-center justify-center flex-shrink-0">
-          <Brain className="h-7 w-7 text-primary-foreground" />
+        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-gradient-to-br from-primary to-secondary glow-primary flex items-center justify-center flex-shrink-0">
+          <Brain className="h-5 w-5 sm:h-7 sm:w-7 text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold leading-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight">
             AI <span className="gradient-text">Predictions</span>
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-xs sm:text-sm">
             ML-powered market forecasting with explainable signals
           </p>
         </div>
@@ -121,7 +121,7 @@ export const Predictions: React.FC = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.12, duration: 0.4 }}
       >
-        <Card className="glass border-primary/20 p-4">
+        <Card className="glass border-primary/20 p-3 sm:p-4">
           <div className="flex items-start gap-3">
             <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
               <BarChart2 className="h-5 w-5 text-primary" />
@@ -151,9 +151,9 @@ export const Predictions: React.FC = () => {
         initial="hidden"
         animate="visible"
       >
-        <Card className="glass border-border/50 p-6 space-y-5">
+        <Card className="glass border-border/50 p-4 sm:p-6 space-y-5">
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1.2fr_auto] gap-4 sm:gap-5 items-start">
 
             {/* Symbol Input */}
             <motion.div variants={itemVariants}>
@@ -168,7 +168,7 @@ export const Predictions: React.FC = () => {
                   onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))}
                   onKeyPress={handleKeyPress}
                   placeholder="e.g., HDFCBANK"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground outline-none transition-all duration-200 text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground outline-none transition-all duration-200 text-sm h-[46px]"
                 />
               </div>
             </motion.div>
@@ -203,13 +203,17 @@ export const Predictions: React.FC = () => {
             </motion.div>
 
             {/* Predict Button */}
-            <motion.div variants={itemVariants} className="flex flex-col justify-end">
+            <motion.div variants={itemVariants} className="flex flex-col">
+              {/* Invisible spacer to match the label height on lg screens */}
+              <div className="hidden lg:block text-xs font-semibold uppercase tracking-wider mb-2 select-none pointer-events-none" aria-hidden="true">
+                &nbsp;
+              </div>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={fetchPrediction}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-xl glow-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 text-sm"
+                className="w-full flex items-center justify-center gap-2 px-6 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-xl glow-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 text-sm h-[46px] whitespace-nowrap lg:min-w-[180px]"
               >
                 {loading ? (
                   <>
@@ -359,12 +363,12 @@ export const Predictions: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
           >
             {[1, 2].map((i) => (
               <Card
                 key={i}
-                className={`glass border-border/50 p-6 space-y-3 ${i === 2 ? 'lg:col-span-2' : ''}`}
+                className={`glass border-border/50 p-4 sm:p-6 space-y-3 ${i === 2 ? 'lg:col-span-2' : ''}`}
               >
                 <div className="h-4 w-1/3 bg-muted/60 rounded-lg animate-pulse" />
                 <div className="h-8 w-2/3 bg-muted/60 rounded-lg animate-pulse" />
@@ -383,7 +387,7 @@ export const Predictions: React.FC = () => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
           >
             {/* Prediction Card */}
             <motion.div variants={fadeInUp} className="lg:col-span-1">
@@ -425,7 +429,7 @@ export const Predictions: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.4 }}
-            className="flex flex-col items-center justify-center py-20 text-center"
+            className="flex flex-col items-center justify-center py-12 sm:py-20 text-center px-4"
           >
             <motion.div
               animate={{ y: [0, -10, 0] }}
@@ -444,7 +448,7 @@ export const Predictions: React.FC = () => {
               see AI-powered market analysis with explainable signals.
             </p>
 
-            <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
               {[
                 { icon: Zap,      label: 'XGBoost',    desc: 'Fast & accurate' },
                 { icon: Cpu,      label: 'LSTM',        desc: 'Deep learning'   },

@@ -166,9 +166,9 @@ async def train_models_for_symbol(
     )
     
     # Get feature matrices
-    X_train, y_train, features = dataset_builder.get_feature_target_split(train_df)
-    X_val, y_val, _ = dataset_builder.get_feature_target_split(val_df)
-    X_test, y_test, _ = dataset_builder.get_feature_target_split(test_df)
+    X_train, y_train, features = dataset_builder.get_feature_target_split(train_df, scale_features=True)
+    X_val, y_val, _   = dataset_builder.get_feature_target_split(val_df,   scale_features=False)
+    X_test, y_test, _ = dataset_builder.get_feature_target_split(test_df,  scale_features=False)
     
     # Save scaler
     os.makedirs(save_dir, exist_ok=True)
