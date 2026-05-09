@@ -17,8 +17,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    portfolios = relationship("Portfolio", back_populates="owner")
-    chat_messages = relationship("ChatMessage", back_populates="user")
+    portfolios     = relationship("Portfolio", back_populates="owner")
+    chat_messages  = relationship("ChatMessage", back_populates="user")
+    holdings       = relationship("PortfolioHolding", back_populates="user")
 
 
 class Asset(Base):
@@ -56,7 +57,21 @@ class Portfolio(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="portfolios")
-    # For now, you can manage holdings on frontend or later add a PortfolioHolding table
+
+
+class PortfolioHolding(Base):
+    __tablename__ = "portfolio_holdings"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    user_id    = Column(Integer, ForeignKey("users.id"), nullable=False)
+    symbol     = Column(String(50), nullable=False, index=True)
+    quantity   = Column(Float, nullable=False)
+    buy_price  = Column(Float, nullable=False)
+    buy_date   = Column(DateTime(timezone=True), nullable=False)
+    asset_type = Column(String(50), default="stock")  # stock / etf / crypto / mutual_fund
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="holdings")
 
 
 class ChatMessage(Base):
@@ -72,14 +87,11 @@ class ChatMessage(Base):
 
 
 class DocumentEmbedding(Base):
-    """
-    RAG storage (if you don't use external vector DB).
-    For now, we keep embedding as JSON/text; can be replaced later.
-    """
+    """RAG storage — can be replaced with external vector DB."""
     __tablename__ = "document_embeddings"
 
     id = Column(Integer, primary_key=True, index=True)
     doc_id = Column(String(255), unique=True, index=True)
     text = Column(Text, nullable=False)
-    embedding = Column(Text, nullable=False)  # JSON-string of vector
+    embedding = Column(Text, nullable=False)
     doc_meta = Column(Text, nullable=True)

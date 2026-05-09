@@ -79,3 +79,50 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources: List[str] = []
+
+
+# ---------- Portfolio Holdings ----------
+
+class HoldingCreate(BaseModel):
+    symbol: str
+    quantity: float
+    buy_price: float
+    buy_date: datetime
+    asset_type: Optional[str] = "stock"
+
+
+class HoldingOut(BaseModel):
+    id: int
+    symbol: str
+    quantity: float
+    buy_price: float
+    buy_date: datetime
+    asset_type: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class HoldingWithStats(HoldingOut):
+    current_price: Optional[float] = None
+    current_value: Optional[float] = None
+    invested_value: float
+    pnl: Optional[float] = None
+    pnl_pct: Optional[float] = None
+    allocation_pct: Optional[float] = None
+
+
+class PortfolioSummary(BaseModel):
+    total_invested: float
+    total_current_value: Optional[float]
+    total_pnl: Optional[float]
+    total_pnl_pct: Optional[float]
+    holdings_count: int
+    last_updated: datetime
+
+
+class CSVImportResult(BaseModel):
+    imported: int
+    failed: int
+    errors: List[dict]
