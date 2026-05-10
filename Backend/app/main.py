@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
-from app.api.v1 import auth, market, chat, health, ws_market, news, prediction, portfolio
+from app.api.v1 import auth, market, chat, health, ws_market, news, prediction, portfolio, risk, alerts
 from app.services.instrument_registry import load_instruments
 from app.db.session import engine
 from app.models import Base
@@ -81,6 +81,8 @@ app.include_router(chat.router,        prefix="/api")
 app.include_router(news.router,        prefix="/api")
 app.include_router(prediction.router,  prefix="/api")
 app.include_router(portfolio.router,   prefix="/api")   # ← NEW
+app.include_router(risk.router,        prefix="/api")   # ← NEW
+app.include_router(alerts.router,      prefix="/api")   # ← NEW
 app.include_router(ws_market.router)
 
 

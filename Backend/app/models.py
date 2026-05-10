@@ -17,9 +17,10 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    portfolios     = relationship("Portfolio", back_populates="owner")
-    chat_messages  = relationship("ChatMessage", back_populates="user")
-    holdings       = relationship("PortfolioHolding", back_populates="user")
+    portfolios    = relationship("Portfolio",        back_populates="owner")
+    chat_messages = relationship("ChatMessage",      back_populates="user")
+    holdings      = relationship("PortfolioHolding", back_populates="user")
+    alerts        = relationship("Alert",            back_populates="user")
 
 
 class Asset(Base):
@@ -72,6 +73,39 @@ class PortfolioHolding(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="holdings")
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id              = Column(Integer, primary_key=True, index=True)
+    user_id         = Column(Integer, ForeignKey("users.id"), nullable=False)
+    symbol          = Column(String(50), nullable=False, index=True)
+    alert_type      = Column(String(50), nullable=False)
+    threshold       = Column(Float, nullable=False)
+    note            = Column(String(500), nullable=True)
+    is_active       = Column(Boolean, default=True)
+    triggered_count = Column(Integer, default=0)
+    last_triggered  = Column(DateTime(timezone=True), nullable=True)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+
+    user     = relationship("User", back_populates="alerts")
+    triggers = relationship("TriggeredAlert", back_populates="alert")
+
+
+class TriggeredAlert(Base):
+    __tablename__ = "triggered_alerts"
+
+    id            = Column(Integer, primary_key=True, index=True)
+    alert_id      = Column(Integer, ForeignKey("alerts.id"), nullable=False)
+    symbol        = Column(String(50), nullable=False)
+    alert_type    = Column(String(50), nullable=False)
+    threshold     = Column(Float, nullable=False)
+    current_value = Column(Float, nullable=False)
+    message       = Column(String(500), nullable=False)
+    triggered_at  = Column(DateTime(timezone=True), server_default=func.now())
+
+    alert = relationship("Alert", back_populates="triggers")
 
 
 class ChatMessage(Base):
