@@ -1,117 +1,419 @@
-# 🚀 Bullseye — AI-Powered Indian Stock Market Platform
+# 🎯 Bullseye — AI-Powered Investment & Trading Assistant
 
-Bullseye is a **full-stack AI-powered stock market platform** focused on the **Indian equity market (NSE)**.  
-It provides **real-time candlestick charts**, **live prices in INR**, **market-aware behavior**, and a **scalable backend architecture** designed for production use.
-
-This project is built with **FastAPI + React**, integrates **Upstox market data**, and dynamically supports **ALL NSE stocks** without hard-coding symbols.
+> A full-stack AI-driven fintech platform that combines live market data, technical analysis, machine learning predictions, and conversational AI into one intelligent investment assistant.
 
 ---
 
-## ✨ Key Features
+# 🚀 Overview
 
-### 📈 Market Data
-- Real-time **candlestick charts**
-- Supports **ALL NSE stocks** (large-cap, mid-cap, small-cap)
-- Multiple timeframes: `1m`, `5m`, `15m`, `60m`, `1D`
-- Automatic fallback to **Daily candles when market is closed**
+Bullseye is a modern AI-powered investment and trading assistant built to simplify the retail investing workflow.
 
-### 💰 Live Price (₹ INR)
-- Displays **live Last Traded Price (LTP)** next to stock symbol
-- Currency-aware (INR)
-- Graceful fallback when price is unavailable
+Most traders use multiple disconnected tools for:
+- Live charts
+- Market analysis
+- Technical indicators
+- News sentiment
+- AI explanations
+- Portfolio tracking
 
-### ⏰ Market Awareness
-- Detects **NSE market open / closed** state (IST timezone)
-- Prevents blank charts outside trading hours
-- Clear UI indicator: **Market Open / Market Closed**
+Bullseye solves this fragmentation by integrating everything into a single intelligent platform.
 
-### 🔌 Real-Time Updates
+The project demonstrates:
+- Full-stack engineering
+- Real-time systems
+- AI integration
+- Machine learning pipelines
+- WebSocket streaming
+- Async backend architecture
+- Production-style debugging and deployment
+
+---
+
+# ✨ Key Features
+
+## 📈 Live Market Dashboard
+- Real-time Indian stock market data
+- Candlestick charts
+- Dynamic NSE stock support
+- Interactive chart visualizations
+
+## 🤖 AI Trading Assistant
+- Conversational AI powered by Google Gemini
+- Indicator explanations
+- Market insights
+- Context-aware trading assistance
+
+## 🧠 Machine Learning Predictions
+- Stock movement prediction
+- BUY / SELL / HOLD style insights
+- Confidence scoring
+- Feature-engineered prediction pipeline
+
+## 📊 Technical Indicators
+- RSI
+- SMA
+- EMA
+- MACD
+- VWAP
+- Volatility analysis
+- Volume spike detection
+
+## ⚡ Real-Time Updates
 - WebSocket-based live price streaming
-- Stable async architecture
-- No polling overload
+- Low-latency market updates
+- Live chart refresh
 
-### 🔍 NSE-Wide Symbol Support
-- Automatically loads **NSE instrument master**
-- No hard-coded symbols
-- Supports thousands of stocks dynamically
+## 🔐 Authentication System
+- JWT authentication
+- Protected routes
+- Secure user sessions
+- Password hashing with bcrypt
 
-### 🔐 Authentication (Extensible)
-- JWT-based auth for REST APIs
-- WebSocket kept public for stability (can be secured later)
-
-### ☁️ Deployment-Ready
-- Render-compatible backend
-- Works with HTTPS & `wss://`
-- No platform-specific hacks
-
-### Why This Project Stands Out
-- Designed like a real trading platform, not a demo
-- Scalable backend architecture
-- Clean separation of concerns
-- Market-aware UX to prevent misleading data
+## 🇮🇳 India-Focused Market Experience
+- NSE-compatible architecture
+- Indian stock symbols support
+- INR-focused product design
+- Upstox integration
 
 ---
 
-## 🛡️ Design Principles
+# 🏗️ System Architecture
 
-- No hard-coded market symbols  
-- Market-aware UI (prevents misleading or blank charts)  
-- Async-first backend architecture  
-- Production-safe defaults  
-- Extensible system design (easy to add brokers, indicators, or services)
+```text
+Frontend (React + TypeScript)
+        ↓
+REST APIs + WebSockets
+        ↓
+FastAPI Backend
+        ↓
+Prediction Engine + AI Services
+        ↓
+Market Providers (Upstox / Finnhub)
+        ↓
+Database + Model Storage
+```
+
+---
+
+# 🛠️ Tech Stack
+
+# Frontend
+- React.js
+- TypeScript
+- Vite
+- Tailwind CSS
+- Framer Motion
+- Zustand
+- TanStack React Query
+- TradingView Lightweight Charts
+- Recharts
+
+# Backend
+- FastAPI
+- Python
+- Async SQLAlchemy
+- SQLite
+- Uvicorn
+- Pydantic v2
+
+# Authentication & Security
+- JWT Authentication
+- bcrypt
+
+# AI & Machine Learning
+- Google Gemini API
+- XGBoost
+- TensorFlow / Keras LSTM
+- Sentence Transformers
+- VADER Sentiment Analysis
+
+# Real-Time Communication
+- WebSockets
+
+# APIs & Market Data
+- Upstox API
+- Finnhub API
+
+# Deployment & DevOps
+- Docker
+- Render
+- GitHub
+- Vercel / Netlify
+
+---
+
+# 🧠 Machine Learning Pipeline
+
+Bullseye uses multiple ML models for different tasks instead of relying on a single model.
+
+## 🔹 XGBoost
+Used for:
+- Structured market prediction
+- Direction classification
+- Fast inference
+
+Predicts:
+- UP
+- DOWN
+- SIDEWAYS
+
+## 🔹 LSTM (TensorFlow/Keras)
+Used for:
+- Time-series learning
+- Sequential candle pattern analysis
+- Historical trend learning
+
+## 🔹 Google Gemini
+Used for:
+- Conversational AI
+- Indicator explanation
+- Market reasoning
+- Natural language responses
+
+## 🔹 VADER
+Used for:
+- News sentiment scoring
+- Market tone analysis
+
+## 🔹 Sentence Transformers
+Used for:
+- Semantic embeddings
+- Future RAG-ready architecture
+- AI memory/search concepts
+
+---
+
+# 📊 Feature Engineering
+
+The prediction engine uses:
+- RSI
+- EMA
+- SMA
+- MACD
+- VWAP
+- Candle patterns
+- Volume spikes
+- Volatility metrics
+- Historical price movements
+
+These features improve:
+- Prediction quality
+- Explainability
+- Market context understanding
 
 ---
 
 
-## 🧱 Tech Stack
+# 📌 Why This Project Stands Out
 
-### Backend
-- **FastAPI** (Python)
-- **Uvicorn**
-- **Upstox API**
-- **Async SQLAlchemy**
-- **WebSockets**
-- **Pydantic v2**
-- **SQLite** (easily swappable with Postgres)
+Bullseye demonstrates:
+- Full-stack development skills
+- Production-style debugging
+- Real-time architecture understanding
+- AI integration
+- Machine learning engineering
+- Async backend systems
+- Financial product thinking
+- API integration expertise
 
-### Frontend
-- **React**
-- **TypeScript**
-- **Lightweight-charts (TradingView)**
-- **Tailwind CSS**
-- **WebSocket client**
-
-### Infrastructure
-- **Render** (Backend deployment)
-- **Render** (Frontend deployment)
-- **GitHub** (CI/CD)
-
----
-## 📸 Screenshots
-
+This project reflects the type of engineering required in:
+- FinTech companies
+- AI startups
+- Trading platforms
+- Backend-heavy systems
+- Real-time applications
 
 ---
 
-## ⚙️ How It Works
+# 📂 Project Structure
 
-1. **Startup**
-   - Backend downloads NSE instrument master (CSV)
-   - Caches it locally and in memory
-   - Enables dynamic symbol → instrument resolution
-
-2. **Market Data Flow**
-   - User selects a stock symbol
-   - Backend resolves symbol to `instrument_key`
-   - Candles and prices fetched via Upstox
-   - WebSocket streams live prices
-
-3. **Market-Aware UX**
-   - Backend detects market open/closed (IST)
-   - Frontend adapts chart behavior automatically
-
+```text
+bullseye/
+│
+├── frontend/
+│   ├── components/
+│   ├── pages/
+│   ├── charts/
+│   ├── store/
+│   └── services/
+│
+├── backend/
+│   ├── api/
+│   ├── services/
+│   ├── ml/
+│   ├── websocket/
+│   ├── models/
+│   ├── database/
+│   └── providers/
+│
+├── training/
+├── datasets/
+├── saved_models/
+├── docker/
+└── docs/
+```
 
 ---
 
+# 📸 Project Screenshots
+
+> Replace the image paths below with your actual screenshots.
+
+## 🏠 Dashboard
+
+```md
+![Dashboard Screenshot](./screenshots/dashboard.png)
+```
+
+---
+
+## 📈 Live Trading Charts
+
+```md
+![Charts Screenshot](./screenshots/charts.png)
+```
+
+---
+
+## 🤖 AI Assistant
+
+```md
+![AI Assistant Screenshot](./screenshots/ai-chat.png)
+```
+
+---
+
+## 📊 Technical Analysis
+
+```md
+![Technical Analysis Screenshot](./screenshots/technical-analysis.png)
+```
+
+---
+
+## 🔐 Authentication System
+
+```md
+![Authentication Screenshot](./screenshots/auth.png)
+```
+
+---
+
+# 🚀 Future Roadmap
+
+## Planned Features
+- Portfolio management
+- CSV/Excel portfolio import
+- Risk analysis engine
+- Backtesting dashboard
+- Multi-broker integration
+- PostgreSQL migration
+- Redis caching
+- Background async training jobs
+- Explainable AI dashboards
+- Live trading execution
+- News-based market sentiment
+- Dockerized production deployment
+
+---
+
+# ⚙️ Installation
+
+## Clone Repository
+
+```bash
+git clone https://github.com/your-username/bullseye.git
+cd bullseye
+```
+
+---
+
+# Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+# Backend Setup
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+---
+
+# 🔑 Environment Variables
+
+Create `.env` files.
+
+## Backend `.env`
+
+```env
+GEMINI_API_KEY=your_key
+UPSTOX_API_KEY=your_key
+JWT_SECRET=your_secret
+DATABASE_URL=sqlite+aiosqlite:///./bullseye.db
+```
+
+---
+
+# 📡 API Features
+
+## REST APIs
+- Authentication APIs
+- Market data APIs
+- Prediction APIs
+- AI chat APIs
+- Indicator APIs
+
+## WebSockets
+- Live price streaming
+- Real-time market updates
+
+---
+
+# 📚 Learning Outcomes
+
+Through Bullseye, I gained hands-on experience in:
+- Async backend architecture
+- Real-time systems
+- WebSockets
+- FinTech engineering
+- Machine learning deployment
+- Model lifecycle management
+- AI integration
+- Production debugging
+- API design
+- Frontend-backend communication
+
+---
+
+# 👨‍💻 Author
+
+## Shrish
+B.Tech CSE (AI/ML) Student  
+Full Stack Developer | ML Enthusiast | FinTech Builder
+
+---
+
+# ⭐ Recruiter Highlights
+
+✔ End-to-end full-stack product  
+✔ Real-time WebSocket architecture  
+✔ AI + ML integration  
+✔ Production-style backend design  
+✔ Financial domain understanding  
+✔ Advanced debugging experience  
+✔ Scalable system thinking  
+✔ India-focused fintech engineering
+
+---
 
 ## 🙌 Author
 
@@ -121,8 +423,18 @@ Passionate about **AI, Trading, and Full-Stack Systems**
 
 ---
 
-## ⭐ Final Note
+# 🌟 Final Note
 
-Bullseye is designed as a **real-world trading platform**, not just a demo project.  
-It follows scalable backend principles, market-aware UX design, and clean architecture to support future growth and advanced features.
+Bullseye evolved from a simple trading assistant idea into a scalable AI-powered fintech platform capable of:
+- Live market analysis
+- Real-time streaming
+- Technical indicator interpretation
+- Machine learning prediction
+- Conversational AI assistance
+
+The project showcases not only feature development but also strong engineering problem-solving, architecture design, and production-level debugging skills.
+
+
+
+---
 
