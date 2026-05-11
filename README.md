@@ -257,45 +257,63 @@ bullseye/
 
 # 📸 Project Screenshots
 
-> Replace the image paths below with your actual screenshots.
-
 ## 🏠 Dashboard
 
-```md
-![Dashboard Screenshot](Assets/1.dashboard.png)
-```
+![Dashboard Screenshot](./Assets/1.%20dashboard.png)
 
 ---
 
-## 📈 Live Trading Charts
+## 📈 Live Market Data
 
-```md
-![Charts Screenshot](./screenshots/charts.png)
-```
+![Market Screenshot](./Assets/2.%20Market.png)
 
 ---
 
-## 🤖 AI Assistant
+## 🤖 Prediction Engine - Sideways
 
-```md
-![AI Assistant Screenshot](./screenshots/ai-chat.png)
-```
+![Prediction Sideways](./Assets/3.%20a%20Prediction%20SW.png)
 
 ---
 
-## 📊 Technical Analysis
+## 📉 Prediction Engine - Loss
 
-```md
-![Technical Analysis Screenshot](./screenshots/technical-analysis.png)
-```
+![Prediction Loss](./Assets/4.%20b%20Prediction%20Lss.png)
 
 ---
 
-## 🔐 Authentication System
+## 📈 Prediction Engine - Up
 
-```md
-![Authentication Screenshot](./screenshots/auth.png)
-```
+![Prediction Up](./Assets/5.%20c%20Prediction%20up.png)
+
+---
+
+## 💼 Portfolio Management
+
+![Portfolio Screenshot](./Assets/6.%20Portfolio.png)
+
+---
+
+## ⚠️ Risk Analysis
+
+![Risk Screenshot](./Assets/7.%20Risk.png)
+
+---
+
+## 📰 Market News
+
+![News Screenshot](./Assets/8.%20News.png)
+
+---
+
+## 🔔 Alert System
+
+![Alert Screenshot](./Assets/9.%20alert.png)
+
+---
+
+## 💬 AI Chat Assistant
+
+![Chat Screenshot](./Assets/10.%20Chat.png)
 
 ---
 
@@ -434,7 +452,4 @@ Bullseye evolved from a simple trading assistant idea into a scalable AI-powered
 
 The project showcases not only feature development but also strong engineering problem-solving, architecture design, and production-level debugging skills.
 
-
-
 ---
-
