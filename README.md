@@ -262,7 +262,7 @@ bullseye/
 ## 🏠 Dashboard
 
 ```md
-![Dashboard Screenshot](./screenshots/dashboard.png)
+![Dashboard Screenshot](Assets/1.dashboard.png)
 ```
 
 ---
