@@ -325,6 +325,93 @@ export async function getTriggeredAlerts(limit = 50): Promise<TriggeredAlert[]> 
 }
 
 /* ═══════════════════════════════════════════════
+   AI DEBATE (Server-Sent Events)
+   ═══════════════════════════════════════════════ */
+export interface DebateEvidence {
+  id: string;
+  category: "model" | "technical" | "risk" | "sentiment" | "position";
+  label: string;
+  value: string;
+  note: string;
+}
+
+export interface DebateClaim {
+  claim: string;
+  evidence_ids: string[];
+  invalid_ids: string[];
+  unverified_numbers: string[];
+  verified: boolean;
+  target?: string;   // rebuttals only
+}
+
+export interface DebateComponent {
+  name: "model" | "technical" | "sentiment" | "risk";
+  raw: number;
+  weight: number;
+  contribution: number;
+  explanation: string;
+}
+
+export interface DebateModerator {
+  summary: string;
+  stronger_side: "bull" | "bear" | "even";
+  stronger_side_reason: string;
+  key_risks: (DebateClaim & { risk: string })[];
+}
+
+export type DebateEvent =
+  | { type: "status"; stage: "evidence" | "openings" | "rebuttals" | "verdict"; message: string }
+  | { type: "evidence"; symbol: string; current_price: number | null; items: DebateEvidence[]; unavailable: string[] }
+  | { type: "argument"; side: "bull" | "bear"; round: "opening"; thesis: string; points: DebateClaim[] }
+  | { type: "argument"; side: "bull" | "bear"; round: "rebuttal"; points: DebateClaim[]; concession: string }
+  | {
+      type: "verdict";
+      verdict: "BUY" | "HOLD" | "SELL";
+      confidence: number;
+      composite: number;
+      thresholds: { buy: number; sell: number };
+      components: DebateComponent[];
+      moderator: DebateModerator | null;
+    }
+  | { type: "error"; stage: string; side?: string; message: string }
+  | { type: "done"; cached: boolean };
+
+export async function streamDebate(
+  symbol: string,
+  onEvent: (e: DebateEvent) => void,
+  opts: { refresh?: boolean; signal?: AbortSignal } = {},
+): Promise<void> {
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(
+    `${API_BASE}/debate/${encodeURIComponent(symbol)}?refresh=${opts.refresh ? "true" : "false"}`,
+    { headers, signal: opts.signal },
+  );
+  if (!res.ok || !res.body) {
+    let detail = "Failed to start debate";
+    try { detail = (await res.json())?.detail || detail; } catch { /* non-JSON error */ }
+    throw new Error(detail);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const frames = buffer.split("\n\n");
+    buffer = frames.pop() ?? "";
+    for (const frame of frames) {
+      const line = frame.split("\n").find((l) => l.startsWith("data: "));
+      if (line) onEvent(JSON.parse(line.slice(6)) as DebateEvent);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════
    Default export (backwards compat)
    ═══════════════════════════════════════════════ */
 export default {
@@ -335,4 +422,5 @@ export default {
   getHoldings, addHolding, deleteHolding, getPortfolioSummary, importPortfolioCSV, getPortfolioInsights,
   getRiskAnalysis, getSymbolVolatility, runScenario,
   getAlerts, createAlert, updateAlert, deleteAlert, checkAlerts, getTriggeredAlerts,
+  streamDebate,
 };

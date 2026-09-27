@@ -13,6 +13,7 @@ import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Market from "./pages/Market";
 import Predictions from "./pages/Predictions";
+import Debate from "./pages/Debate";
 import Portfolio from "./pages/Portfolio";
 import Risk from "./pages/Risk";
 import News from "./pages/News";
@@ -49,6 +50,7 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/market" element={<Market />} />
               <Route path="/predictions" element={<Predictions />} />
+              <Route path="/debate" element={<Debate />} />
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/risk" element={<Risk />} />
               <Route path="/news" element={<News />} />

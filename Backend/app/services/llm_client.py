@@ -1,8 +1,13 @@
 # app/services/llm_client.py
 
 import os
+from typing import Type, TypeVar
+
 from google import genai
 from google.genai import types
+from pydantic import BaseModel
+
+T = TypeVar("T", bound=BaseModel)
 
 class LLMClient:
     """
@@ -63,3 +68,34 @@ class LLMClient:
             # Print error to console for debugging
             print(f"Gemini API Error: {e}")
             return f"AI service error: {str(e)}"
+
+    async def generate_json(
+        self,
+        system_prompt: str,
+        user_message: str,
+        schema: Type[T],
+        temperature: float = 0.5,
+    ) -> T:
+        """
+        Async structured generation for agents.
+
+        No Google Search grounding: agents must argue only from the evidence
+        they are given. Raises on failure so callers can degrade gracefully.
+        """
+        response = await self.client.aio.models.generate_content(
+            model=self.model_name,
+            contents=user_message,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=temperature,
+                max_output_tokens=2048,
+                response_mime_type="application/json",
+                response_schema=schema,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+            ),
+        )
+        if isinstance(response.parsed, schema):
+            return response.parsed
+        if not response.text:
+            raise RuntimeError("Empty response from Gemini")
+        return schema.model_validate_json(response.text)

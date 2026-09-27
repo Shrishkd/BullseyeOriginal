@@ -11,6 +11,7 @@ CACHE_FILE = os.path.join(CACHE_DIR, "nse_instruments.csv")
 CACHE_TTL_HOURS = 24
 
 _symbol_map = {}
+_name_map = {}
 
 
 def _cache_valid():
@@ -55,6 +56,7 @@ def load_instruments():
 
     # -------- Load into memory --------
     _symbol_map.clear()
+    _name_map.clear()
 
     with open(CACHE_FILE, encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -66,9 +68,16 @@ def load_instruments():
                 continue
 
             _symbol_map[symbol.upper()] = instrument_key
+            if row.get("name"):
+                _name_map[symbol.upper()] = row["name"]
 
     print(f"NSE instruments loaded: {len(_symbol_map)} symbols")
 
 
 def resolve_symbol(symbol: str):
     return _symbol_map.get(symbol.upper())
+
+
+def resolve_name(symbol: str) -> str | None:
+    """Company name from the instrument master, e.g. 'RELIANCE INDUSTRIES LTD'."""
+    return _name_map.get(symbol.upper())

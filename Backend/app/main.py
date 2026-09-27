@@ -8,16 +8,33 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
-from app.api.v1 import auth, market, chat, health, ws_market, news, prediction, portfolio, risk, alerts, dashboard 
+from app.api.v1 import auth, market, chat, health, ws_market, news, prediction, portfolio, risk, alerts, dashboard, debate
 from app.services.instrument_registry import load_instruments
-from app.db.session import engine
+from app.db.session import engine, AsyncSessionLocal
 from app.models import Base
+from app.crud import users as users_crud
+from app.schemas import UserCreate
+
+
+async def ensure_demo_user():
+    """Create the demo account advertised on the login page, if it doesn't exist."""
+    if not settings.DEMO_EMAIL:
+        return
+    async with AsyncSessionLocal() as db:
+        if not await users_crud.get_user_by_email(db, settings.DEMO_EMAIL):
+            await users_crud.create_user(db, UserCreate(
+                email=settings.DEMO_EMAIL,
+                password=settings.DEMO_PASSWORD,
+                full_name="Demo User",
+            ))
+            print(f"Demo user created: {settings.DEMO_EMAIL}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await ensure_demo_user()
 
     load_instruments()
     print("✅ Startup completed: DB ready, NSE instruments loaded")
@@ -84,6 +101,7 @@ app.include_router(portfolio.router,   prefix="/api")
 app.include_router(risk.router,        prefix="/api")   
 app.include_router(alerts.router,      prefix="/api")  
 app.include_router(dashboard.router,   prefix="/api")
+app.include_router(debate.router,      prefix="/api")
 app.include_router(ws_market.router)
 
 

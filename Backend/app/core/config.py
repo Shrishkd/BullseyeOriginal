@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # Demo account shown on the login page; created at startup if missing
+    DEMO_EMAIL: str | None = "shrish@test.com"
+    DEMO_PASSWORD: str = "demo1234"
+
     # =====================
     # AI / ML
     # =====================

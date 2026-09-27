@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
+
+// Seeded by the backend at startup (settings.DEMO_EMAIL / DEMO_PASSWORD)
+const DEMO_EMAIL = 'shrish@test.com';
+const DEMO_PASSWORD = 'demo1234';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,12 +20,11 @@ export default function Login() {
 
   const login = useAuthStore((state) => state.login);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const signIn = async (loginEmail: string, loginPassword: string) => {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(loginEmail, loginPassword);
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (error: any) {
@@ -29,6 +32,17 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    signIn(email, password);
+  };
+
+  const handleDemoLogin = () => {
+    setEmail(DEMO_EMAIL);
+    setPassword(DEMO_PASSWORD);
+    signIn(DEMO_EMAIL, DEMO_PASSWORD);
   };
 
 
@@ -113,6 +127,29 @@ export default function Login() {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </form>
+
+          {/* Demo account */}
+          <div className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <p className="text-sm font-semibold text-foreground">Demo account</p>
+            </div>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm mb-3">
+              <dt className="text-muted-foreground">Email</dt>
+              <dd className="font-mono text-foreground select-all break-all">{DEMO_EMAIL}</dd>
+              <dt className="text-muted-foreground">Password</dt>
+              <dd className="font-mono text-foreground select-all">{DEMO_PASSWORD}</dd>
+            </dl>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={handleDemoLogin}
+              className="w-full border-primary/40 text-primary hover:bg-primary/10"
+            >
+              Sign in with demo account
+            </Button>
+          </div>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             Don't have an account?{' '}

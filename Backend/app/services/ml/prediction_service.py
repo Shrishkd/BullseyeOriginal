@@ -221,6 +221,7 @@ class PredictionService:
         # ── Predict ────────────────────────────────────────────
         prediction = int(model.predict(X_scaled)[0])   # -1, 0, or 1
         confidence = float(model.get_confidence(X_scaled)[0])
+        probs = model.predict_proba(X_scaled)[0]        # [P(down), P(sideways), P(up)]
 
         prediction_label = {-1: 'DOWN', 0: 'SIDEWAYS', 1: 'UP'}[prediction]
 
@@ -234,11 +235,29 @@ class PredictionService:
 
         signals = self._generate_signals(df, prediction)
         current_price = float(df['close'].iloc[-1])
+        latest = df.iloc[-1]
+
+        def _num(key):
+            val = latest.get(key)
+            return round(float(val), 2) if val is not None and pd.notna(val) else None
 
         return {
             'symbol':         symbol.upper(),
             'prediction':     prediction_label,
             'confidence':     round(confidence, 2),
+            'probabilities':  {
+                'down':     round(float(probs[0]) * 100, 2),
+                'sideways': round(float(probs[1]) * 100, 2),
+                'up':       round(float(probs[2]) * 100, 2),
+            },
+            'indicators':     {
+                'rsi':         _num('rsi'),
+                'ema_9':       _num('ema_9'),
+                'ema_21':      _num('ema_21'),
+                'macd':        _num('macd'),
+                'macd_signal': _num('macd_signal'),
+            },
+            'volatility':     round(volatility, 2),
             'expected_move':  expected_move_str,
             'current_price':  round(current_price, 2),
             'signals':        signals,

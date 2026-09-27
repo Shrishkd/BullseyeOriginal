@@ -1,6 +1,6 @@
 from sqlalchemy import (
-    Column, Integer, String, Boolean, DateTime, Float,
-    ForeignKey, Text
+    Column, Integer, String, Boolean, DateTime, Float, Date,
+    ForeignKey, Text, UniqueConstraint
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -129,3 +129,16 @@ class DocumentEmbedding(Base):
     text = Column(Text, nullable=False)
     embedding = Column(Text, nullable=False)
     doc_meta = Column(Text, nullable=True)
+
+
+class SentimentSnapshot(Base):
+    """One VADER sentiment reading per symbol per day — feeds the sentiment trend."""
+    __tablename__ = "sentiment_snapshots"
+    __table_args__ = (UniqueConstraint("symbol", "day", name="uq_sentiment_symbol_day"),)
+
+    id            = Column(Integer, primary_key=True, index=True)
+    symbol        = Column(String(50), nullable=False, index=True)
+    day           = Column(Date, nullable=False)
+    score         = Column(Float, nullable=False)       # avg VADER compound, -1..1
+    article_count = Column(Integer, nullable=False)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
