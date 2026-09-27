@@ -67,6 +67,50 @@ Rounds stream to the browser over **Server-Sent Events**, and finished debates a
 
 ---
 
+## 📸 Screenshots
+
+### Dashboard
+
+![Dashboard](./Assets/1.%20dashboard.png)
+
+### Live Market Data
+
+![Live Market Data](./Assets/2.%20Market.png)
+
+### Prediction — Sideways
+
+![Prediction — Sideways](./Assets/3.%20a%20Prediction%20SW.png)
+
+### Prediction — Down
+
+![Prediction — Down](./Assets/4.%20b%20Prediction%20Lss.png)
+
+### Prediction — Up
+
+![Prediction — Up](./Assets/5.%20c%20Prediction%20up.png)
+
+### Portfolio Management
+
+![Portfolio Management](./Assets/6.%20Portfolio.png)
+
+### Risk Analysis
+
+![Risk Analysis](./Assets/7.%20Risk.png)
+
+### Market News & Sentiment
+
+![Market News & Sentiment](./Assets/8.%20News.png)
+
+### Smart Alerts
+
+![Smart Alerts](./Assets/9.%20alert.png)
+
+### AI Chat Assistant
+
+![AI Chat Assistant](./Assets/10.%20Chat.png)
+
+---
+
 ## 🧱 Architecture
 
 ```
@@ -268,6 +312,30 @@ Bullseye/
 - Walk-forward validation, Optuna tuning, and SHAP explanations for XGBoost
 - PostgreSQL, Redis caching, and background training with Celery
 - WebSocket authentication
+
+---
+
+## 📚 Learning Outcomes
+
+Building Bullseye gave hands-on experience in:
+- Async backend architecture and real-time systems (WebSockets, Server-Sent Events)
+- Machine learning pipelines and model lifecycle management
+- LLM integration: structured outputs, grounding and multi-agent design
+- FinTech domain modelling: indicators, risk metrics, portfolio analytics
+- API design and frontend–backend communication
+- Production-style debugging across broker APIs, async sessions, CORS and auth
+
+---
+
+## ⭐ Recruiter Highlights
+
+✔ End-to-end full-stack product  
+✔ Real-time WebSocket and SSE streaming  
+✔ ML pipeline with XGBoost + LSTM and auto-training  
+✔ Multi-agent AI debate with evidence-grounded, machine-checked claims  
+✔ Financial domain understanding (Sharpe, Beta, VaR, HHI, stress tests)  
+✔ Production-style backend design and debugging  
+✔ India-focused fintech engineering  
 
 ---
 
