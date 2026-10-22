@@ -5,6 +5,7 @@ import asyncio
 import httpx
 from datetime import datetime, timedelta, time
 import pytz
+from dotenv import load_dotenv
 from .base import MarketProvider
 
 UPSTOX_BASE_URL = "https://api.upstox.com/v2"
@@ -13,8 +14,6 @@ UPSTOX_TIMEOUT = httpx.Timeout(connect=30.0, read=30.0, write=10.0, pool=10.0)
 UPSTOX_MAX_RETRIES = 3
 UPSTOX_RETRY_BACKOFF_SECONDS = 2
 
-# Upstox API limitation - max date they have data for (update this as needed)
-UPSTOX_MAX_DATE = datetime(2025, 10, 23).date()
 
 def is_market_open():
     now = datetime.now(IST)
@@ -26,9 +25,15 @@ def is_market_open():
 class UpstoxProvider(MarketProvider):
 
     def __init__(self):
+        self._load_token()
+
+    def _load_token(self):
+        load_dotenv(override=True)
         self.access_token = os.getenv("UPSTOX_ACCESS_TOKEN")
 
     def _headers(self):
+        if not self.access_token:
+            self._load_token()
         return {
             "Authorization": f"Bearer {self.access_token}",
             "Accept": "application/json",
@@ -63,6 +68,8 @@ class UpstoxProvider(MarketProvider):
     # ============================
     async def fetch_quote(self, instrument_key: str) -> dict:
         if not self.access_token:
+            self._load_token()
+        if not self.access_token:
             return {}
 
         url = f"{UPSTOX_BASE_URL}/market-quote/ltp"
@@ -79,6 +86,8 @@ class UpstoxProvider(MarketProvider):
 
         data = r.json().get("data", {})
         q = data.get(instrument_key)
+        if not q and data:
+            q = next(iter(data.values()), None)
         if not q:
             return {}
 
@@ -91,6 +100,8 @@ class UpstoxProvider(MarketProvider):
     # CANDLES (HISTORICAL + INTRADAY)
     # ============================
     async def fetch_candles(self, instrument_key: str, resolution: str, limit=100):
+        if not self.access_token:
+            self._load_token()
         if not self.access_token:
             return []
 
@@ -111,9 +122,7 @@ class UpstoxProvider(MarketProvider):
             # DAILY CANDLES
             # ======================
             if interval == "day":
-                # Cap to_date at UPSTOX_MAX_DATE to avoid requesting unavailable future data
-                real_now = datetime.now(IST).date()
-                to_date = min(real_now, UPSTOX_MAX_DATE)
+                to_date = datetime.now(IST).date()
                 from_date = to_date - timedelta(days=limit)
 
                 from_date_str = from_date.strftime("%Y-%m-%d")

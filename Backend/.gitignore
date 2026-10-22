@@ -1,5 +1,4 @@
-*.venv
-venv
+*venv*
 docker-compose.yml
 .env
 *.txt
