@@ -1,4 +1,4 @@
-from dotenv import load_dotenv
+﻿from dotenv import load_dotenv
 load_dotenv()
 
 from contextlib import asynccontextmanager
@@ -37,20 +37,26 @@ async def lifespan(app: FastAPI):
     await ensure_demo_user()
 
     load_instruments()
-    print("✅ Startup completed: DB ready, NSE instruments loaded")
+    print("Startup completed: DB ready, NSE instruments loaded")
 
     yield
 
-    print("🛑 Shutdown: cleaning up")
+    print("Shutdown: cleaning up")
 
 
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:5173",
-]
+cors_env = (getattr(settings, "CORS_ORIGINS", "*") or "*").strip()
+if cors_env == "*":
+    ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://127.0.0.1:5173",
+    ]
+    ALLOW_ORIGIN_REGEX = r"^https?://.*"
+else:
+    ALLOWED_ORIGINS = [o.strip() for o in cors_env.split(",") if o.strip()]
+    ALLOW_ORIGIN_REGEX = None
 
 
 class CatchAllErrorMiddleware(BaseHTTPMiddleware):
@@ -59,7 +65,7 @@ class CatchAllErrorMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         except Exception as exc:
-            print(f"❌ Unhandled error on {request.method} {request.url}: {exc}")
+            print(f"Unhandled error on {request.method} {request.url}: {exc}")
             origin = request.headers.get("origin", "")
             resp = JSONResponse(
                 status_code=500,
@@ -69,7 +75,7 @@ class CatchAllErrorMiddleware(BaseHTTPMiddleware):
                     "path": str(request.url),
                 },
             )
-            if origin in ALLOWED_ORIGINS:
+            if origin:
                 resp.headers["access-control-allow-origin"] = origin
                 resp.headers["access-control-allow-credentials"] = "true"
             return resp
@@ -81,13 +87,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+cors_kwargs = {
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+if ALLOW_ORIGIN_REGEX:
+    cors_kwargs["allow_origin_regex"] = ALLOW_ORIGIN_REGEX
+else:
+    cors_kwargs["allow_origins"] = ALLOWED_ORIGINS
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 app.add_middleware(CatchAllErrorMiddleware)
 
 # Routers

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+﻿from pydantic_settings import BaseSettings
 from pydantic import Field
 
 
@@ -11,6 +11,20 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(
         default="sqlite+aiosqlite:///./bullseye.db"
     )
+
+    @property
+    def async_database_url(self) -> str:
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+asyncpg://", 1)
+        if url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
+    # =====================
+    # CORS
+    # =====================
+    CORS_ORIGINS: str = "*"
 
     # =====================
     # AUTH / JWT
