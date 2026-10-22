@@ -1,2 +1,6 @@
-run backend: python -m uvicorn app.main:app --reload --port 8000  or  uvicorn app.main:app --reload
-             python -m uvicorn app.main:app
+# Option 1: Activate virtual environment first
+.\venv\Scripts\Activate.ps1
+python -m uvicorn app.main:app --reload --port 8000
+
+# Option 2: Run directly via venv python
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
